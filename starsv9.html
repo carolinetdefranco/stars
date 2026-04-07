@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Dreamy Star Map ✨</title>
+
+<style>
+  body {
+    margin: 0;
+    font-family: 'Arial', sans-serif;
+    background: #000;
+    color: white;
+    overflow: hidden;
+  }
+
+  #sky {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  .star {
+    position: absolute;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .star:hover {
+    transform: scale(2);
+    box-shadow: 0 0 10px white, 0 0 25px #8ab4ff;
+  }
+
+  /* SHOOTING STAR (NO TRAIL) */
+  .shooting-star {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 0 12px white, 0 0 25px #8ab4ff;
+    pointer-events: none;
+  }
+
+  #popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(20, 20, 50, 0.9);
+    padding: 25px;
+    border-radius: 25px;
+    width: 320px;
+    text-align: center;
+    box-shadow: 0 0 30px rgba(138, 180, 255, 0.6);
+    display: none;
+    backdrop-filter: blur(10px);
+    z-index: 10;
+  }
+
+  #close {
+    margin-top: 15px;
+    cursor: pointer;
+    font-size: 12px;
+    opacity: 0.7;
+  }
+
+  #close:hover { opacity: 1; }
+
+  .diamond {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: white;
+    transform: rotate(45deg);
+    pointer-events: none;
+    box-shadow: 0 0 8px white, 0 0 15px #8ab4ff;
+    animation: fadeOut 0.7s forwards;
+  }
+
+  @keyframes fadeOut {
+    to {
+      opacity: 0;
+      transform: scale(0.5) rotate(45deg);
+    }
+  }
+</style>
+</head>
+
+<body>
+
+<div id="sky"></div>
+
+<div id="popup">
+  <h2 id="starName"></h2>
+  <p id="starType"></p>
+  <p id="starFact"></p>
+  <div id="close" onclick="closePopup()">close ✧</div>
+</div>
+
+<script>
+
+/* FULL LARGE STAR DATA (RESTORED) */
+const starsData = [
+  {name:"Sirius",type:"Main Sequence",fact:"Brightest star in Earth's night sky"},
+  {name:"Canopus",type:"Supergiant",fact:"Second brightest star"},
+  {name:"Arcturus",type:"Red Giant",fact:"Very old star nearing end of life"},
+  {name:"Vega",type:"Blue-White",fact:"Former North Star"},
+  {name:"Capella",type:"Multiple System",fact:"Four-star system"},
+  {name:"Rigel",type:"Blue Supergiant",fact:"Extremely luminous"},
+  {name:"Procyon",type:"Binary",fact:"Has white dwarf companion"},
+  {name:"Betelgeuse",type:"Red Supergiant",fact:"Future supernova candidate"},
+  {name:"Altair",type:"Fast Rotator",fact:"Rotates in ~10 hours"},
+  {name:"Aldebaran",type:"Orange Giant",fact:"Eye of Taurus"},
+  {name:"Antares",type:"Red Supergiant",fact:"Mars-like color"},
+  {name:"Spica",type:"Binary",fact:"Very hot star"},
+  {name:"Pollux",type:"Orange Giant",fact:"Has exoplanet"},
+  {name:"Fomalhaut",type:"Young Star",fact:"Has debris disk"},
+  {name:"Deneb",type:"Blue Supergiant",fact:"Extremely luminous"},
+  {name:"Regulus",type:"Fast Rotator",fact:"Flattened shape"},
+  {name:"Adhara",type:"Blue Giant",fact:"Very bright"},
+  {name:"Shaula",type:"Hot Star",fact:"In Scorpius tail"},
+  {name:"Alnitak",type:"Blue Supergiant",fact:"Orion belt star"},
+  {name:"Alnilam",type:"Blue Supergiant",fact:"Bright Orion belt star"},
+  {name:"Mintaka",type:"Multiple",fact:"Western Orion belt star"},
+  {name:"Bellatrix",type:"Blue Giant",fact:"Amazon star"},
+  {name:"Elnath",type:"Giant",fact:"Shared constellation star"},
+  {name:"Miaplacidus",type:"White Giant",fact:"In Carina"},
+  {name:"Alnair",type:"Blue Giant",fact:"Bright in Grus"},
+  {name:"Wezen",type:"Yellow Supergiant",fact:"Very large star"},
+  {name:"Sargas",type:"Yellow Giant",fact:"In Scorpius"},
+  {name:"Kaus Australis",type:"Blue Giant",fact:"Bright Sagittarius star"},
+  {name:"Avior",type:"Orange Giant",fact:"Complex system"},
+  {name:"Alphard",type:"Orange Giant",fact:"Hydra’s lone bright star"},
+  {name:"Hamal",type:"Orange Giant",fact:"Aries brightest"},
+  {name:"Diphda",type:"Red Giant",fact:"In Cetus"},
+  {name:"Mirfak",type:"Supergiant",fact:"Cluster center"},
+  {name:"Algol",type:"Binary",fact:"Brightness changes"},
+  {name:"Rasalhague",type:"White Giant",fact:"Ophiuchus head"},
+  {name:"Markab",type:"Blue Giant",fact:"Pegasus star"},
+  {name:"Algenib",type:"Subgiant",fact:"Pegasus square"},
+  {name:"Sadalmelik",type:"Supergiant",fact:"Aquarius star"},
+  {name:"Nunki",type:"Blue Giant",fact:"Second brightest in Sagittarius"},
+  {name:"Peacock",type:"Blue Subgiant",fact:"Bright in Pavo"},
+  {name:"Alsephina",type:"White Giant",fact:"In Vela"},
+  {name:"Izar",type:"Binary",fact:"Color contrast star"},
+  {name:"Zubenelgenubi",type:"Binary",fact:"Libra system"},
+  {name:"Zubeneschamali",type:"Greenish Star",fact:"Appears slightly green"},
+  {name:"Gacrux",type:"Red Giant",fact:"Southern Cross star"},
+  {name:"Acrux",type:"Blue Giant",fact:"Brightest in Crux"},
+  {name:"Mimosa",type:"Blue Giant",fact:"Southern Cross member"},
+  {name:"Alcyone",type:"Blue Giant",fact:"Brightest Pleiades star"},
+  {name:"Maia",type:"Blue Giant",fact:"Pleiades member"},
+  {name:"Electra",type:"Blue Giant",fact:"Pleiades star"},
+  {name:"Taygeta",type:"Blue Giant",fact:"Pleiades cluster"},
+  {name:"Celaeno",type:"Blue Giant",fact:"Faint Pleiades star"},
+  {name:"Sterope",type:"Binary",fact:"Pleiades system"},
+  {name:"Atlas",type:"Blue Giant",fact:"Pleiades parent star"},
+  {name:"Pleione",type:"Variable",fact:"Changes brightness"},
+  {name:"Almach",type:"Binary",fact:"Gold and blue colors"},
+  {name:"Menkalinan",type:"Binary",fact:"Auriga system"},
+  {name:"Caph",type:"Subgiant",fact:"Cassiopeia star"},
+  {name:"Schedar",type:"Orange Giant",fact:"Cassiopeia brightest"},
+  {name:"Ruchbah",type:"Binary",fact:"Cassiopeia star"},
+  {name:"Segin",type:"Blue Giant",fact:"Cassiopeia"},
+  {name:"Eltanin",type:"Orange Giant",fact:"Dragon star"},
+  {name:"Rastaban",type:"Yellow Giant",fact:"Draco constellation"},
+  {name:"Thuban",type:"White Giant",fact:"Ancient pole star"},
+  {name:"Kochab",type:"Orange Giant",fact:"Little Dipper"},
+  {name:"Pherkad",type:"White Giant",fact:"Ursa Minor star"},
+  {name:"Megrez",type:"White Star",fact:"Big Dipper star"},
+  {name:"Alioth",type:"Blue White",fact:"Brightest Ursa Major"},
+  {name:"Dubhe",type:"Giant",fact:"Big Dipper pointer"},
+  {name:"Merak",type:"Subgiant",fact:"Points to Polaris"},
+  {name:"Phecda",type:"White Star",fact:"Ursa Major"},
+  {name:"Alkaid",type:"Blue Star",fact:"End of Big Dipper"}
+];
+
+const sky = document.getElementById("sky");
+
+/* STARS */
+starsData.forEach((data, i) => {
+  const star = document.createElement("div");
+  star.classList.add("star");
+
+  const size = Math.random() * 3 + 2;
+  const colors = ["#ffffff","#cfd8ff","#ffd6ff","#fff4cc","#d0fbff"];
+
+  star.style.width = size + "px";
+  star.style.height = size + "px";
+  star.style.background = colors[Math.floor(Math.random() * colors.length)];
+  star.style.boxShadow = `0 0 ${size * 4}px white`;
+
+  star.style.top = Math.random() * 100 + "vh";
+  star.style.left = Math.random() * 100 + "vw";
+
+  star.onclick = () => showStar(i);
+
+  sky.appendChild(star);
+});
+
+/* ONE SHOOTING STAR */
+let shootingActive = false;
+
+function createShootingStar() {
+  if (shootingActive) return;
+  shootingActive = true;
+
+  const star = document.createElement("div");
+  star.classList.add("shooting-star");
+
+  let x = -50;
+  let y = Math.random() * window.innerHeight;
+  const arc = (Math.random() * -0.3) - 0.1;
+
+  sky.appendChild(star);
+
+  function animate() {
+    x += 10;
+    y += arc * 10;
+
+    star.style.left = x + "px";
+    star.style.top = y + "px";
+
+    if (x < window.innerWidth + 100) {
+      requestAnimationFrame(animate);
+    } else {
+      star.remove();
+      shootingActive = false;
+    }
+  }
+
+  animate();
+}
+
+setInterval(() => {
+  if (Math.random() > 0.5) createShootingStar();
+}, 1200);
+
+/* POPUP + CURSOR (unchanged) */
+function showStar(index) {
+  const star = starsData[index];
+  document.getElementById("starName").innerText = star.name;
+  document.getElementById("starType").innerText = star.type;
+  document.getElementById("starFact").innerText = star.fact;
+  document.getElementById("popup").style.display = "block";
+}
+
+function closePopup() {
+  document.getElementById("popup").style.display = "none";
+}
+
+document.addEventListener("click", (e) => {
+  const popup = document.getElementById("popup");
+  if (popup.style.display === "block" && !popup.contains(e.target) && !e.target.classList.contains("star")) {
+    closePopup();
+  }
+});
+
+document.addEventListener("mousemove", (e) => {
+  const d = document.createElement("div");
+  d.classList.add("diamond");
+  d.style.left = e.clientX + "px";
+  d.style.top = e.clientY + "px";
+  document.body.appendChild(d);
+  setTimeout(() => d.remove(), 700);
+});
+</script>
+
+</body>
+</html>
